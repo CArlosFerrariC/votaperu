@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Votación con Persistencia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🗳️ Simulador de Votación</h1>
+  <div class="container">
+    <label for="dni">Ingrese su DNI:</label>
+    <input type="text" id="dni" placeholder="Ej: 12345678">
+
+    <label for="opcion">Seleccione su voto:</label>
+    <select id="opcion">
+      <option value="A">Candidato A</option>
+      <option value="B">Candidato B</option>
+      <option value="C">Candidato C</option>
+    </select>
+
+    <button onclick="emitirVoto()">Emitir Voto</button>
+
+    <p id="mensaje"></p>
+
+    <div id="dashboard">
+      <h2>Resultados en tiempo real</h2>
+      <div id="resultados"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
