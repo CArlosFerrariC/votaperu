@@ -1,29 +1,66 @@
-const express = require('express');
 const axios = require('axios');
-const cheerio = require('cheerio'); // para parsear HTML
-const app = express();
+const cheerio = require('cheerio');
+const mysql = require('mysql2/promise');
 
-app.use(express.json());
-
-app.get('/api/consulta/:dni', async (req, res) => {
-  const dni = req.params.dni;
-  try {
-    const response = await axios.get(`https://eldni.com/pe/buscar-datos-por-dni/${dni}`);
-    const $ = cheerio.load(response.data);
-
-    // Ejemplo: extraer nombre y apellidos del HTML
-    const nombre = $('td:contains("Nombres")').next().text().trim();
-    const apellidoPaterno = $('td:contains("Apellido Paterno")').next().text().trim();
-    const apellidoMaterno = $('td:contains("Apellido Materno")').next().text().trim();
-
-    if (nombre) {
-      res.json({ valido: true, dni, nombre, apellidoPaterno, apellidoMaterno });
-    } else {
-      res.json({ valido: false });
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Error consultando eldni.com' });
-  }
+// Configuración de la conexión a MySQL
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: 'tu_password',
+  database: 'mibasedatos'
 });
 
-app.listen(3000, () => console.log('Servidor corriendo en http://localhost:3000'));
+// Función para validar DNI en ONPE (ejemplo didáctico)
+async function validarDNI(dni) {
+  const url = "https://consultaelectoral.onpe.gob.pe/";
+  try {
+    const response = await axios.post(url, { dni: dni }, {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
+
+    const $ = cheerio.load(response.data);
+    const textoPagina = $("body").text();
+
+    if (textoPagina.includes("DNI no existe") || textoPagina.toLowerCase().includes("no se encontró")) {
+      return false; // DNI no existe
+    } else {
+      return true;  // DNI existe (miembro o no miembro)
+    }
+  } catch (error) {
+    console.error("Error al consultar ONPE:", error.message);
+    throw error;
+  }
+}
+
+// Función principal: validar y registrar en MySQL
+async function procesarDNI(dni) {
+  const existe = await validarDNI(dni);
+
+  if (!existe) {
+    return "DNI no existe en la base de datos electoral";
+  }
+
+  // Buscar en la base de datos
+  const [rows] = await pool.query("SELECT * FROM encuesta_votos WHERE dni = ?", [dni]);
+
+  if (rows.length > 0) {
+    return "El DNI ya votó en la encuesta";
+  } else {
+    await pool.query("INSERT INTO encuesta_votos (dni, fecha) VALUES (?, NOW())", [dni]);
+    return "DNI registrado como nuevo voto en la encuesta";
+  }
+}
+
+// Ejemplo de uso
+(async () => {
+  const resultado = await procesarDNI("12345678");
+  console.log(resultado);
+})();
+
+const PORT = 3000;
+
+// Arrancar servidor directamente
+app.listen(PORT, () => {
+  console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log('📍 Endpoint: GET /api/consulta/:dni');
+});

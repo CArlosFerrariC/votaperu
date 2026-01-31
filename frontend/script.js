@@ -1,6 +1,7 @@
 async function validarDNI(dni) {
   try {
-    const response = await fetch(`http://localhost:3000/api/consulta/${dni}`);
+    const response = await fetch(`https://votaperu.onrender.com/api/consulta/${dni}`);
+    //const response = await fetch(`http://localhost:3000/api/consulta/${dni}`);
     const data = await response.json();
     return data.valido;
   } catch (error) {
