@@ -1,66 +1,91 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
-const mysql = require('mysql2/promise');
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
 
-// Configuración de la conexión a MySQL
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'tu_password',
-  database: 'mibasedatos'
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// --- In-Memory Database ---
+// Generate 36 candidates
+const candidates = Array.from({ length: 36 }, (_, i) => ({
+  id: `c${i + 1}`,
+  name: `Candidato ${i + 1}`,
+  // In a real app, you might have party, photo, etc.
+}));
+
+// Initialize vote counts for each candidate
+const voteCounts = candidates.reduce((acc, candidate) => {
+  acc[candidate.id] = 0;
+  return acc;
+}, {});
+
+// Set to store DNIs that have already voted
+const votedDNIs = new Set();
+// --- End of In-Memory Database ---
+
+
+// Middleware
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(express.json()); // To parse JSON bodies
+app.use(express.static(path.join(__dirname, '../frontend'))); // Serve static files from frontend
+
+// --- API Endpoints ---
+
+// 1. Get the list of all candidates
+app.get('/api/candidates', (req, res) => {
+  res.json(candidates);
 });
 
-// Función para validar DNI en ONPE (ejemplo didáctico)
-async function validarDNI(dni) {
-  const url = "https://consultaelectoral.onpe.gob.pe/";
-  try {
-    const response = await axios.post(url, { dni: dni }, {
-      headers: { "User-Agent": "Mozilla/5.0" }
-    });
-
-    const $ = cheerio.load(response.data);
-    const textoPagina = $("body").text();
-
-    if (textoPagina.includes("DNI no existe") || textoPagina.toLowerCase().includes("no se encontró")) {
-      return false; // DNI no existe
-    } else {
-      return true;  // DNI existe (miembro o no miembro)
-    }
-  } catch (error) {
-    console.error("Error al consultar ONPE:", error.message);
-    throw error;
+// 2. Check if a DNI is eligible to vote
+app.post('/api/check-dni', (req, res) => {
+  const { dni } = req.body;
+  if (!/^\d{8}$/.test(dni)) {
+    return res.status(400).json({ error: 'Formato de DNI inválido. Debe contener 8 dígitos.' });
   }
-}
+  if (votedDNIs.has(dni)) {
+    return res.status(409).json({ message: 'Este DNI ya ha emitido un voto.' });
+  }
+  // For this simulation, any valid DNI format that hasn't voted is considered valid.
+  res.status(200).json({ message: 'DNI habilitado para votar.' });
+});
 
-// Función principal: validar y registrar en MySQL
-async function procesarDNI(dni) {
-  const existe = await validarDNI(dni);
+// 3. Submit a vote
+app.post('/api/vote', (req, res) => {
+  const { dni, candidateId } = req.body;
 
-  if (!existe) {
-    return "DNI no existe en la base de datos electoral";
+  // Basic validation
+  if (!dni || !/^\d{8}$/.test(dni)) {
+    return res.status(400).json({ error: 'DNI inválido.' });
+  }
+  if (!candidateId || voteCounts[candidateId] === undefined) {
+    return res.status(400).json({ error: 'ID de candidato inválido.' });
   }
 
-  // Buscar en la base de datos
-  const [rows] = await pool.query("SELECT * FROM encuesta_votos WHERE dni = ?", [dni]);
-
-  if (rows.length > 0) {
-    return "El DNI ya votó en la encuesta";
-  } else {
-    await pool.query("INSERT INTO encuesta_votos (dni, fecha) VALUES (?, NOW())", [dni]);
-    return "DNI registrado como nuevo voto en la encuesta";
+  // Check if DNI has already voted
+  if (votedDNIs.has(dni)) {
+    return res.status(409).json({ message: 'Este DNI ya ha emitido un voto.' });
   }
-}
 
-// Ejemplo de uso
-(async () => {
-  const resultado = await procesarDNI("12345678");
-  console.log(resultado);
-})();
+  // Record the vote
+  votedDNIs.add(dni);
+  voteCounts[candidateId]++;
 
-const PORT = 3000;
+  console.log(`Voto registrado para DNI: ${dni}, Candidato: ${candidateId}`);
+  res.status(201).json({ message: 'Voto registrado exitosamente.' });
+});
 
-// Arrancar servidor directamente
+// 4. Get current election results
+app.get('/api/results', (req, res) => {
+  // We can combine candidate info with vote counts for a more useful response
+  const results = candidates.map(c => ({
+    ...c,
+    votes: voteCounts[c.id]
+  })).sort((a, b) => b.votes - a.votes); // Sort by most votes
+
+  res.json(results);
+});
+
+// --- Server Start ---
 app.listen(PORT, () => {
-  console.log(`\n🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log('📍 Endpoint: GET /api/consulta/:dni');
+  console.log(`🚀 Servidor de simulación de voto corriendo en http://localhost:${PORT}`);
 });

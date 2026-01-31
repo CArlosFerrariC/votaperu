@@ -1,33 +1,48 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Simulador de Votación con Persistencia</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Votación Electoral 2026</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>🗳️ Simulador de Votación</h1>
-  <div class="container">
-    <label for="dni">Ingrese su DNI:</label>
-    <input type="text" id="dni" placeholder="Ej: 12345678">
-
-    <label for="opcion">Seleccione su voto:</label>
-    <select id="opcion">
-      <option value="A">Candidato A</option>
-      <option value="B">Candidato B</option>
-      <option value="C">Candidato C</option>
-    </select>
-
-    <button onclick="emitirVoto()">Emitir Voto</button>
-
-    <p id="mensaje"></p>
-
-    <div id="dashboard">
-      <h2>Resultados en tiempo real</h2>
-      <div id="resultados"></div>
+    <!-- DNI Registration Modal -->
+    <div id="dni-modal" class="modal-overlay active">
+        <div class="modal-content">
+            <h2>Registra tu DNI para Votar</h2>
+            <p>Por favor, ingresa tu número de DNI (8 dígitos) para continuar.</p>
+            <input type="text" id="dni-input" placeholder="12345678" maxlength="8">
+            <button id="dni-submit">Verificar DNI</button>
+            <p id="dni-message" class="message"></p>
+        </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
+    <!-- Main Voting App -->
+    <div id="app-container" class="container" style="display: none;">
+        <header>
+            <h1>Elecciones Generales 2026</h1>
+            <p>Bienvenido, <span id="user-dni"></span>. Selecciona tu candidato de preferencia.</p>
+            <button id="view-results-btn">Ver Resultados</button>
+        </header>
+
+        <div id="candidates-grid" class="candidates-grid">
+            <!-- Candidate cards will be injected here by JavaScript -->
+        </div>
+
+        <p id="vote-message" class="message"></p>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Resultados de la Votación</h2>
+            <div id="results-container">
+                <!-- Results will be injected here -->
+            </div>
+            <button id="close-results-btn">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
