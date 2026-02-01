@@ -107,6 +107,10 @@ app.get('/api/results', (req, res) => {
 });
 
 // --- Server Start ---
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor de simulación de voto corriendo en http://localhost:${PORT}`);
 });
+
+
+//asegurar que escuche a todos
+//app.listen(3000, '0.0.0.0', () => { console.log('Servidor corriendo en puerto 3000'); });
