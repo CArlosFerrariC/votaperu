@@ -7,11 +7,32 @@ const PORT = process.env.PORT || 3000;
 
 // --- In-Memory Database ---
 // Generate 36 candidates
-const candidates = Array.from({ length: 36 }, (_, i) => ({
-  id: `c${i + 1}`,
-  name: `Candidato ${i + 1}`,
-  // In a real app, you might have party, photo, etc.
+// --- In-Memory Database ---
+const candidatesData = require('./xls/Candidatos.json');
+
+const candidates = candidatesData.map((c, i) => ({
+  id: c.ID, // o `c${i + 1}` si prefieres tu propio ID
+  name: c.NOMBRE || `Candidato ${i + 1}`,
+  partido: c.PARTIDO || `Partido ${i + 1}`,
+  photo: `/img/Candidatos/${c.ID}.jpg` // mejor usar el ID para que coincida con el nombre del archivo
 }));
+
+module.exports = candidates;
+
+// const candidatesData = require('./xls/Candidatos.json');
+
+// const candidates = candidatesData.map((c, i) => ({
+//   id: `c${i + 1}`,
+//   name: c.NOMBRE || `Candidato ${i + 1}`, // Ajusta 'NOMBRE' según la cabecera de tu Excel
+//   photo: `/img/Candidatos/${i + 1}.jpg`
+// }));
+// const candidates = Array.from({ length: 36 }, (_, i) => ({
+//   id: `c${i + 1}`,
+//   name: `Candidato ${i + 1}`,
+//   photo: `/img/Candidatos/
+// ${i + 1}.jpg`
+//   // In a real app, you might have party, photo, etc.
+// }));
 
 // Initialize vote counts for each candidate
 const voteCounts = candidates.reduce((acc, candidate) => {

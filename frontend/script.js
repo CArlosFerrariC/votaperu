@@ -90,8 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.dataset.id = candidate.id;
 
                 card.innerHTML = `
-                    <img src="https://i.pravatar.cc/80?u=${candidate.id}" alt="Foto de ${candidate.name}">
+                    <img src="${candidate.photo}" alt="Foto de ${candidate.name}">
                     <div class="candidate-name">${candidate.name}</div>
+                    <div class="candidate-partido">${candidate.partido}</div>
                     <button class="vote-btn">Votar</button>
                 `;
                 
