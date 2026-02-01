@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "echo 'no build step'"
   },
   "keywords": [],
   "author": "",
@@ -18,5 +19,12 @@
     "express": "^5.2.1",
     "mysql2": "^3.16.2",
     "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=18"
   }
+
 }
+
+  
+
